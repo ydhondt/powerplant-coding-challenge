@@ -22,8 +22,8 @@ namespace PPCC.Api
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddScoped<IProductionPlanCalculator, ProductionPlanCalculator>();
-
-            services.AddSignalR();
+            services.AddSingleton<IBroadcastService, BroadcastService>();
+           
             services.AddControllers();
 
             services.AddSwaggerGen(c =>
@@ -44,12 +44,15 @@ namespace PPCC.Api
 
             // Set up global error handling.
             app.ConfigureExceptionHandler(logger);
-
+            
+            // Set up the web sockets functionality.
+            app.UseWebSockets();
+            app.UseMiddleware<BroadcastWebSocketMiddleware>();
+            
             app.UseRouting();
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers(); 
-                endpoints.MapHub<BroadcastHub>("/broadcast");
             });
         }
     }

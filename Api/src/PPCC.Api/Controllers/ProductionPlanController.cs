@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
 using PPCC.Service;
 using PPCC.Service.Models;
@@ -15,13 +14,13 @@ namespace PPCC.Api.Controllers
     {
         private readonly IProductionPlanCalculator _productionPlanCalculator;
         private readonly ILogger<ProductionPlanController> _logger;
-        private readonly IHubContext<BroadcastHub> _hub;
+        private readonly IBroadcastService _broadcastService;
 
-        public ProductionPlanController(IProductionPlanCalculator productionPlanCalculator, ILogger<ProductionPlanController> logger, IHubContext<BroadcastHub> hub)
+        public ProductionPlanController(IProductionPlanCalculator productionPlanCalculator, ILogger<ProductionPlanController> logger, IBroadcastService broadcastService)
         {
             _productionPlanCalculator = productionPlanCalculator;
             _logger = logger;
-            _hub = hub;
+            _broadcastService = broadcastService;
         }
 
         [HttpPost("productionplan", Name = "Production Plan Calculator")]
@@ -31,7 +30,7 @@ namespace PPCC.Api.Controllers
 
             var result = _productionPlanCalculator.Calculate(payload.Load, payload.Powerplants, payload.Fuels);
 
-            await _hub.Clients.All.SendAsync("ReceiveMessage", JsonSerializer.Serialize(payload), JsonSerializer.Serialize(result));
+            await _broadcastService.BroadcastMessageAsync(string.Concat(JsonSerializer.Serialize(payload), Environment.NewLine, Environment.NewLine, JsonSerializer.Serialize(result), Environment.NewLine, Environment.NewLine));
 
             return Ok(result);
         }
